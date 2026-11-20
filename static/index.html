@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DriveMind AI | Real-Time Marketplace Brain</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen">
+    <nav class="bg-blue-900 text-white p-4 shadow-lg">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold flex items-center gap-2">🧠 DriveMind AI <span class="text-xs bg-blue-700 px-2 py-1 rounded">Hackathon Demo</span></h1>
+            <div class="text-sm text-blue-200">Driver ID: DRV-9921</div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left: Map / Visualizer -->
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-md p-6 border border-gray-200">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2">🗺️ Live City Grid</h2>
+            <div class="bg-gray-100 rounded-lg h-80 flex items-center justify-center relative overflow-hidden border-2 border-dashed border-gray-300">
+                <div class="absolute inset-0 grid grid-cols-4 grid-rows-4 gap-1 p-4 opacity-30">
+                    <div class="bg-blue-200 rounded"></div><div class="bg-gray-200 rounded"></div><div class="bg-gray-200 rounded"></div><div class="bg-gray-200 rounded"></div>
+                    <div class="bg-gray-200 rounded"></div><div class="bg-green-200 rounded" id="zone-downtown"></div><div class="bg-gray-200 rounded"></div><div class="bg-gray-200 rounded"></div>
+                    <div class="bg-gray-200 rounded"></div><div class="bg-gray-200 rounded"></div><div class="bg-red-200 rounded" id="zone-stadium"></div><div class="bg-gray-200 rounded"></div>
+                    <div class="bg-gray-200 rounded"></div><div class="bg-gray-200 rounded"></div><div class="bg-gray-200 rounded"></div><div class="bg-yellow-200 rounded"></div>
+                </div>
+                <div class="z-10 text-center">
+                    <div class="text-4xl mb-2">🚖</div>
+                    <p class="font-semibold text-gray-700">Current Location: <span id="current-location" class="text-blue-600">Grid 2B (Downtown)</span></p>
+                    <p class="text-sm text-gray-500 mt-1">Simulated Map View</p>
+                </div>
+            </div>
+            
+            <!-- Metrics -->
+            <div class="grid grid-cols-3 gap-4 mt-6">
+                <div class="bg-blue-50 p-4 rounded-lg text-center border border-blue-100">
+                    <div class="text-2xl font-bold text-blue-700" id="metric-idle">8.2m</div>
+                    <div class="text-xs text-blue-600 uppercase font-semibold">Avg Idle Time</div>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg text-center border border-green-100">
+                    <div class="text-2xl font-bold text-green-700">32%</div>
+                    <div class="text-xs text-green-600 uppercase font-semibold">Improvement vs Baseline</div>
+                </div>
+                <div class="bg-purple-50 p-4 rounded-lg text-center border border-purple-100">
+                    <div class="text-2xl font-bold text-purple-700" id="metric-model-status">Healthy</div>
+                    <div class="text-xs text-purple-600 uppercase font-semibold">Model Status</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Agent Chat & Admin Controls -->
+        <div class="space-y-6">
+            <!-- Chat Interface -->
+            <div class="bg-white rounded-xl shadow-md border border-gray-200 flex flex-col h-96">
+                <div class="p-4 border-b border-gray-100 bg-gray-50 rounded-t-xl">
+                    <h2 class="font-bold text-gray-700">💬 DriveMind Assistant</h2>
+                </div>
+                <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-3">
+                    <div class="bg-blue-50 text-blue-800 p-3 rounded-lg rounded-tl-none text-sm">
+                        <strong>🤖 Agent:</strong> Hello! I'm monitoring city demand. Click "Get Next Location" for optimized routing.
+                    </div>
+                </div>
+                <div class="p-4 border-t border-gray-100">
+                    <button onclick="askAgent()" id="ask-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2">
+                        <span>📍</span> Get Next Location
+                    </button>
+                </div>
+            </div>
+
+            <!-- Judge Control Panel -->
+            <div class="bg-gray-800 text-white rounded-xl shadow-md p-5 border border-gray-700">
+                <h3 class="font-bold text-sm uppercase tracking-wider text-gray-400 mb-3">🎛️ Judge Control Panel (Simulate Failures)</h3>
+                <div class="space-y-3">
+                    <button onclick="triggerAdmin('inject_stale_model')" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-semibold py-2 px-3 rounded transition text-left flex justify-between items-center">
+                        <span>Inject Stale Model</span> <span class="text-xs bg-yellow-800 px-2 py-0.5 rounded">Safety Test</span>
+                    </button>
+                    <button onclick="triggerAdmin('trigger_stadium_exit')" class="w-full bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 px-3 rounded transition text-left flex justify-between items-center">
+                        <span>Trigger Stadium Exit</span> <span class="text-xs bg-red-800 px-2 py-0.5 rounded">Surge Test</span>
+                    </button>
+                    <button onclick="triggerAdmin('reset_model')" class="w-full bg-gray-600 hover:bg-gray-500 text-white text-sm font-semibold py-2 px-3 rounded transition">
+                        🔄 Reset to Healthy State
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let isProcessing = false;
+
+        async function askAgent() {
+            if (isProcessing) return;
+            isProcessing = true;
+            const btn = document.getElementById('ask-btn');
+            const chatBox = document.getElementById('chat-box');
+            
+            btn.innerHTML = '<span class="animate-spin">⏳</span> Analyzing...';
+            
+            // Add user message
+            chatBox.innerHTML += `<div class="bg-gray-100 text-gray-800 p-3 rounded-lg rounded-tr-none text-sm ml-8"><strong>👤 Driver:</strong> Where should I go next?</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const response = await fetch('/api/agent/route', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ driver_id: "DRV-9921", current_grid: "Grid 2B", query: "Next location" })
+                });
+                const data = await response.json();
+
+                let bubbleClass = "bg-blue-50 text-blue-800";
+                if (data.action === "heuristic_override") bubbleClass = "bg-yellow-50 text-yellow-800 border border-yellow-200";
+                if (data.action === "redirect") bubbleClass = "bg-red-50 text-red-800 border border-red-200";
+
+                chatBox.innerHTML += `
+                    <div class="${bubbleClass} p-3 rounded-lg rounded-tl-none text-sm mr-8 animate-pulse-once">
+                        <strong>🤖 ${data.agent}:</strong> ${data.message}<br>
+                        <span class="text-xs opacity-75 mt-1 block">➡️ Recommended: ${data.recommended_grid} | Wait: ${data.expected_wait_time_mins}m</span>
+                    </div>`;
+                
+                // Update visual map highlight
+                document.getElementById('current-location').innerText = data.recommended_grid;
+                
+            } catch (error) {
+                chatBox.innerHTML += `<div class="bg-red-100 text-red-800 p-3 rounded-lg text-sm">❌ Error connecting to agent.</div>`;
+            }
+            
+            chatBox.scrollTop = chatBox.scrollHeight;
+            btn.innerHTML = '<span>📍</span> Get Next Location';
+            isProcessing = false;
+        }
+
+        async function triggerAdmin(action) {
+            try {
+                const response = await fetch(`/api/admin/${action}`, { method: 'POST' });
+                const data = await response.json();
+                
+                // Update UI based on action
+                if (action === 'inject_stale_model') {
+                    document.getElementById('metric-model-status').innerText = "Stale ⚠️";
+                    document.getElementById('metric-model-status').className = "text-2xl font-bold text-yellow-600";
+                } else if (action === 'trigger_stadium_exit') {
+                    document.getElementById('metric-model-status').innerText = "Surge 🚨";
+                    document.getElementById('metric-model-status').className = "text-2xl font-bold text-red-600";
+                } else {
+                    document.getElementById('metric-model-status').innerText = "Healthy";
+                    document.getElementById('metric-model-status').className = "text-2xl font-bold text-purple-700";
+                }
+                
+                alert("✅ " + data.message);
+            } catch (error) {
+                alert("❌ Failed to trigger admin action");
+            }
+        }
+    </script>
+</body>
+</html>
